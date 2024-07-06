@@ -28,6 +28,7 @@ contract Agent {
         address owner;
 	string twitterLogin;
 	string lastCode;
+	string lastResponse;
         string errorMessage;
         uint iteration;
         bool isFinished;
@@ -140,6 +141,7 @@ contract Agent {
 	    return;
         }
 	string memory userId = usersByLogin[login];
+        agentRuns[runId].lastResponse = response;
 
 	run.iteration++;
 	// TODO delete?
