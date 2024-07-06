@@ -22,7 +22,7 @@ contract Agent {
 	string timestamp;
     }
 
-    uint private agentRunCount;
+    uint private agentCurrentId;
     mapping(uint => AgentRun) public agentRuns;
     struct AgentRun {
         address owner;
@@ -74,7 +74,7 @@ contract Agent {
 
     // View functions
     function getAgentRunCount() public view returns (uint) {
-	return agentRunCount;
+	return agentCurrentId;
     }
 
     function getAgentRun(uint runId) public view returns (AgentRun memory) {
@@ -94,13 +94,13 @@ contract Agent {
     }
 
     function runAgent(string memory twitterLogin) public returns (uint) {
-        AgentRun storage run = agentRuns[agentRunCount];
+        AgentRun storage run = agentRuns[agentCurrentId];
 
         run.owner = msg.sender;
-	run.twitterLogin = twitterLogin;
+        run.twitterLogin = twitterLogin;
 
-	uint runId = agentRunCount;
-        agentRunCount++;
+        uint runId = agentCurrentId;
+        agentCurrentId++;
 
 	stepFetchUserId(runId, twitterLogin);
 	emit RunCreated(runId, run.owner);
