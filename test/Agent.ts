@@ -49,7 +49,6 @@ describe("Agent", function () {
       // Step 3
       await oracle.addFunctionResponse(functionId, id, "", "");
       run = await agent.agentRuns(id);
-      // console.log(run.lastCode);
       expect(run.iteration).to.equal(4);
       expect(run.isFinished).to.equal(true);
       functionId++;

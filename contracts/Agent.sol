@@ -27,8 +27,8 @@ contract Agent {
     struct AgentRun {
         address owner;
 	string twitterLogin;
-	string lastCode;
-	string lastResponse;
+	string[] codeInterpreted;
+	string[] responses;
         string errorMessage;
         uint iteration;
         bool isFinished;
@@ -39,9 +39,6 @@ contract Agent {
 
     // @notice Address of the oracle contract
     address public oracleAddress;
-
-    // @notice Last response received from the oracle
-    string public lastResponse;
 
     // @notice Event emitted when the oracle address is updated
     event OracleAddressUpdated(address indexed newOracleAddress);
@@ -141,7 +138,7 @@ contract Agent {
 	    return;
         }
 	string memory userId = usersByLogin[login];
-        agentRuns[runId].lastResponse = response;
+        agentRuns[runId].responses.push(response);
 
 	run.iteration++;
 	// TODO delete?
@@ -183,10 +180,10 @@ contract Agent {
             "url = 'https://api.twitter.com/2/users/by/username/";
 	string memory part2 = "';"
             "d = requests.get(url, headers={'Authorization': 'Bearer '+token}).json();"
-            "print(d['data']['id']);";
+            "print(d['data']['id'], end='');";
 	string memory code = string(abi.encodePacked(part1, login, part2));
 	AgentRun storage run = agentRuns[runId];
-	run.lastCode = code;
+	run.codeInterpreted.push(code);
 
         IOracle(oracleAddress).createFunctionCall(runId, "code_interpreter", code);
     }
@@ -199,10 +196,10 @@ contract Agent {
 	    "url = f'https://api.twitter.com/2/users/{userId}/tweets?max_results=100&exclude=retweets,replies&tweet.fields=created_at';"
             "data = requests.get(url, headers={'Authorization': 'Bearer '+token}).json();"
             "d = data.get('data');"
-	    "print(f\"{d['id']}|{d['created_at']}|{d['text']}\") if d else print('')";
+	    "print(f\"{d['id']}|{d['created_at']}|{d['text']}\", end='') if d else print('', end='')";
 	string memory code = string(abi.encodePacked(part1, userId, part2));
 	AgentRun storage run = agentRuns[runId];
-	run.lastCode = code;
+	run.codeInterpreted.push(code);
 
         IOracle(oracleAddress).createFunctionCall(runId, "code_interpreter", code);
     }
@@ -217,10 +214,10 @@ contract Agent {
 	    "url = f'https://api.twitter.com/2/users/{userId}/tweets?since_id={lastTweetId}&max_results=5&exclude=retweets,replies&tweet.fields=created_at';"
             "data = requests.get(url, headers={'Authorization': 'Bearer '+token}).json();"
             "d = data.get('data');"
-	    "print(f\"{d['id']}|{d['created_at']}|{d['text']}\") if d else print('')";
+	    "print(f\"{d['id']}|{d['created_at']}|{d['text']}\", end='') if d else print('', end='')";
 	string memory code = string(abi.encodePacked(part1, userId, part2, lastTweetId, part3));
 	AgentRun storage run = agentRuns[runId];
-	run.lastCode = code;
+	run.codeInterpreted.push(code);
 
         IOracle(oracleAddress).createFunctionCall(runId, "code_interpreter", code);
     }
