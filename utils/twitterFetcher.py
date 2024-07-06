@@ -1,6 +1,6 @@
 import requests
 
-BEARER_TOKEN = 'AAAAAAAAAAAAAAAAAAAAADi9ugEAAAAAGSogK2HaDOMziDBaUkY1dc%2FrZ4A%3DI3wtabpUB3vdVRhaZhVqMNQuDhNFOnQOqo8993WquqbyPmEyWg'
+BEARER_TOKEN = ''
 
 def create_headers(bearer_token):
     headers = {
