@@ -18,8 +18,8 @@ contract Agent {
     struct Tweet {
 	string userId;
 	string tweetId;
-	string text;
 	string timestamp;
+	string text;
     }
 
     uint private agentCurrentId;
@@ -102,7 +102,23 @@ contract Agent {
         uint runId = agentCurrentId;
         agentCurrentId++;
 
-	stepFetchUserId(runId, twitterLogin);
+	if (keccak256(abi.encodePacked(usersByLogin[twitterLogin])) == keccak256(abi.encodePacked(""))) {
+	    if (usersById[usersByLogin[twitterLogin]].isProcessing) {
+		delete agentRuns[runId];
+		return 0;
+	    }
+            agentCurrentId++;
+	    if (usersById[usersByLogin[twitterLogin]].tweets.length > 0) {
+                agentCurrentId++;
+		// TODO get latest tweet id
+		string memory latestTweetId = "777";
+		stepFetchTweet(runId, usersByLogin[twitterLogin], latestTweetId);
+	    } else {
+		stepFetchFirstTweet(runId, twitterLogin);
+	    }
+	} else {
+	    stepFetchUserId(runId, twitterLogin);
+	}
 	emit RunCreated(runId, run.owner);
 
         return runId;
@@ -123,22 +139,38 @@ contract Agent {
 	    run.isFinished = true;
 	    return;
         }
+	string memory userId = usersByLogin[login];
 
 	run.iteration++;
+	// TODO delete?
 	agentRuns[runId] = run;
+
+	// Fetch user id
 	if (run.iteration == 1) {
 	    // TODO should not happen when user exists
-	    string memory userId = response;
+	    userId = response;
 	    usersById[userId] = User(userId, login, true, new Tweet[](0));
 	    usersByLogin[login] = userId;
-	    stepFetchTweets(runId, response);
+	    stepFetchFirstTweet(runId, response);
+
+	// Fetch first tweet id
 	} else if (run.iteration == 2) {
 	    string[] memory parts = split(response, "|");
-	    Tweet memory tweet = Tweet(parts[0], parts[1], parts[2], "");
-	    string memory userId = usersByLogin[login];
+	    Tweet memory tweet = Tweet(userId, parts[0], parts[1], parts[2]);
 	    usersById[userId].tweets.push(tweet);
-	    usersById[userId].isProcessing = false;
-	    run.isFinished = true;
+	    stepFetchTweet(runId, userId, parts[0]);
+
+	// Fetch tweet
+	} else if (run.iteration >= 3) {
+	    if (bytes(response).length == 0) {
+		run.isFinished = true;
+	        usersById[userId].isProcessing = false;
+		return;
+	    }
+	    string[] memory parts = split(response, "|");
+	    Tweet memory tweet = Tweet(userId, parts[0], parts[1], parts[2]);
+	    usersById[userId].tweets.push(tweet);
+	    stepFetchTweet(runId, userId, parts[0]);
 	}
     }
 
@@ -157,16 +189,34 @@ contract Agent {
         IOracle(oracleAddress).createFunctionCall(runId, "code_interpreter", code);
     }
 
-    function stepFetchTweets(uint runId, string memory userId) private {
+    function stepFetchFirstTweet(uint runId, string memory userId) private {
 	string memory part1 = "import requests;"
             "token = requests.get('http://157.230.22.0/token').text.strip();"
             "userId = '";
 	string memory part2 = "';"
 	    "url = f'https://api.twitter.com/2/users/{userId}/tweets?max_results=100&exclude=retweets,replies&tweet.fields=created_at';"
             "data = requests.get(url, headers={'Authorization': 'Bearer '+token}).json();"
-            "d = data['data'][-1];"
-	    "print(f\"{d['id']}|{d['created_at']}|{d['text']}\");";
+            "d = data.get('data');"
+	    "print(f\"{d['id']}|{d['created_at']}|{d['text']}\") if d else print('')";
 	string memory code = string(abi.encodePacked(part1, userId, part2));
+	AgentRun storage run = agentRuns[runId];
+	run.lastCode = code;
+
+        IOracle(oracleAddress).createFunctionCall(runId, "code_interpreter", code);
+    }
+
+    function stepFetchTweet(uint runId, string memory userId, string memory lastTweetId) private {
+	string memory part1 = "import requests;"
+            "token = requests.get('http://157.230.22.0/token').text.strip();"
+            "userId = '";
+	string memory part2 = "';"
+	    "lastTweetId = '";
+	string memory part3 = "';"
+	    "url = f'https://api.twitter.com/2/users/{userId}/tweets?since_id={lastTweetId}&max_results=5&exclude=retweets,replies&tweet.fields=created_at';"
+            "data = requests.get(url, headers={'Authorization': 'Bearer '+token}).json();"
+            "d = data.get('data');"
+	    "print(f\"{d['id']}|{d['created_at']}|{d['text']}\") if d else print('')";
+	string memory code = string(abi.encodePacked(part1, userId, part2, lastTweetId, part3));
 	AgentRun storage run = agentRuns[runId];
 	run.lastCode = code;
 
