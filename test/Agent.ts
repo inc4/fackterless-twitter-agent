@@ -62,5 +62,45 @@ describe("Agent", function () {
       expect(user.tweets[0][2]).to.equal("2023-11-27T21:32:19.000Z");
       expect(user.tweets[0][3]).to.equal("I criticize parts of *both* the e/acc and EA camps for being too willing to put their trust in a single centralized actor, whether a nonprofit or a national government, in their solutions. https://t.co/rwalZlGSGv");
     });
+
+    it("Continue to process twitter account", async () => {
+      const {agent, oracle, owner} = await loadFixture(deploy);
+      await agent.setOracleAddress(oracle.target);
+      await oracle.updateWhitelist(owner.address, true);
+
+      const login = "VitalikButerin";
+      await (await agent.runAgent(login)).wait();
+      await (await oracle.addFunctionResponse(0, 0, "295218901", "")).wait();
+      await (await oracle.addFunctionResponse(1, 0, "1729251834404249696|2023-11-27T21:32:19.000Z|I criticize parts of *both* the e/acc and EA camps for being too willing to put their trust in a single centralized actor, whether a nonprofit or a national government, in their solutions. https://t.co/rwalZlGSGv", "")).wait();
+      await (await oracle.addFunctionResponse(2, 0, "", "err")).wait();
+      expect((await agent.agentRuns(0)).isFinished).to.equal(true);
+
+      await (await agent.runAgent(login)).wait();
+      await (await oracle.addFunctionResponse(3, 1, "1729251838581727232|2023-11-27T21:32:20.000Z|My philosophy: d/acc https://t.co/GDzrNrmQdz", "")).wait();
+      const tweets = (await agent.getUserByLogin(login)).tweets;
+      expect(tweets.length).to.equal(2);
+      expect(tweets[0].tweetId).to.equal("1729251834404249696");
+      expect(tweets[1].tweetId).to.equal("1729251838581727232");
+    });
+
+    it("Should stop the run", async () => {
+      const {agent, oracle, owner} = await loadFixture(deploy);
+      await agent.setOracleAddress(oracle.target);
+      await oracle.updateWhitelist(owner.address, true);
+
+      const login = "VitalikButerin";
+      const tx = await agent.runAgent(login);
+      const res = await tx.wait();
+      await oracle.addFunctionResponse(0, 0, "295218901", "");
+
+      expect((await agent.agentRuns(0)).isFinished).to.equal(false);
+      expect((await agent.getUserByLogin(login)).isProcessing).to.equal(true);
+
+      const tx2 = await agent.disableAgentRun(0);
+      await tx2.wait();
+
+      expect((await agent.agentRuns(0)).isFinished).to.equal(true);
+      expect((await agent.getUserByLogin(login)).isProcessing).to.equal(false);
+    });
   });
 });

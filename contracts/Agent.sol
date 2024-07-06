@@ -100,17 +100,18 @@ contract Agent {
         uint runId = agentCurrentId;
         agentCurrentId++;
 
-	if (keccak256(abi.encodePacked(usersByLogin[twitterLogin])) == keccak256(abi.encodePacked(""))) {
-	    if (usersById[usersByLogin[twitterLogin]].isProcessing) {
+	string storage userId = usersByLogin[twitterLogin];
+	if (keccak256(abi.encodePacked(userId)) != keccak256(abi.encodePacked(""))) {
+	    if (usersById[userId].isProcessing) {
 		delete agentRuns[runId];
 		return 0;
 	    }
-            agentCurrentId++;
-	    if (usersById[usersByLogin[twitterLogin]].tweets.length > 0) {
-                agentCurrentId++;
-		// TODO get latest tweet id
-		string memory latestTweetId = "777";
-		stepFetchTweet(runId, usersByLogin[twitterLogin], latestTweetId);
+	    run.iteration++;
+	    if (usersById[userId].tweets.length > 0) {
+	        run.iteration++;
+		uint n = usersById[userId].tweets.length;
+		string memory latestTweetId = usersById[userId].tweets[n-1].tweetId;
+		stepFetchTweet(runId, userId, latestTweetId);
 	    } else {
 		stepFetchFirstTweet(runId, twitterLogin);
 	    }
@@ -132,17 +133,16 @@ contract Agent {
 	require(bytes(login).length > 0, "Agent run not found");
 	require(!run.isFinished, "Agent run is already finished");
 
+	string memory userId = usersByLogin[login];
         if (bytes(errorMessage).length > 0) {
 	    run.errorMessage = errorMessage;
 	    run.isFinished = true;
+	    usersById[userId].isProcessing = false;
 	    return;
         }
-	string memory userId = usersByLogin[login];
         agentRuns[runId].responses.push(response);
 
 	run.iteration++;
-	// TODO delete?
-	agentRuns[runId] = run;
 
 	// Fetch user id
 	if (run.iteration == 1) {
@@ -196,7 +196,7 @@ contract Agent {
 	    "url = f'https://api.twitter.com/2/users/{userId}/tweets?max_results=100&exclude=retweets,replies&tweet.fields=created_at';"
             "data = requests.get(url, headers={'Authorization': 'Bearer '+token}).json();"
             "d = data.get('data');"
-	    "print(f\"{d['id']}|{d['created_at']}|{d['text']}\", end='') if d else print('', end='')";
+	    "print(f\"{(d:=d[-1])['id']}|{d['created_at']}|{d['text']}\", end='') if d else print('', end='')";
 	string memory code = string(abi.encodePacked(part1, userId, part2));
 	AgentRun storage run = agentRuns[runId];
 	run.codeInterpreted.push(code);
@@ -214,12 +214,18 @@ contract Agent {
 	    "url = f'https://api.twitter.com/2/users/{userId}/tweets?since_id={lastTweetId}&max_results=5&exclude=retweets,replies&tweet.fields=created_at';"
             "data = requests.get(url, headers={'Authorization': 'Bearer '+token}).json();"
             "d = data.get('data');"
-	    "print(f\"{d['id']}|{d['created_at']}|{d['text']}\", end='') if d else print('', end='')";
+	    "print(f\"{(d:=d[-1])['id']}|{d['created_at']}|{d['text']}\", end='') if d else print('', end='')";
 	string memory code = string(abi.encodePacked(part1, userId, part2, lastTweetId, part3));
 	AgentRun storage run = agentRuns[runId];
 	run.codeInterpreted.push(code);
 
         IOracle(oracleAddress).createFunctionCall(runId, "code_interpreter", code);
+    }
+
+    function disableAgentRun(uint runId) public onlyOwner {
+	AgentRun storage run = agentRuns[runId];
+	agentRuns[runId].isFinished = true;
+	usersById[usersByLogin[run.twitterLogin]].isProcessing = false;
     }
 
     function split(string memory _base, string memory _value) internal pure returns (string[] memory splitArr) {

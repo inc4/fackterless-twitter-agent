@@ -16,8 +16,8 @@ async function main() {
   const login = process.env.TWITTER_LOGIN;
   const transactionResponse = await contract.runAgent(login);
   const receipt = await transactionResponse.wait();
-  console.log(`Run Id: ${receipt.logs[1].args[0]}`);
   console.log(`Tx: ${receipt.hash}`);
+  console.log(`Run Id: ${receipt.logs[1].args[0]}`);
 }
 
 main()
