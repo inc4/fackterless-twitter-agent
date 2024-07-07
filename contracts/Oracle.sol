@@ -381,7 +381,6 @@ contract Oracle is IOracle {
     ) public onlyWhitelisted {
         require(!isPromptProcessed[promptId], "Prompt already processed");
         isPromptProcessed[promptId] = true;
-	console.log("XXX: %s", callbackAddresses[promptId]);
         IChatGpt(callbackAddresses[promptId]).onOracleOpenAiLlmResponse(
             promptCallBackId,
             response,
