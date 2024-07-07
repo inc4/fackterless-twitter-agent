@@ -196,7 +196,7 @@ contract Agent {
 	    "url = f'https://api.twitter.com/2/users/{userId}/tweets?max_results=10&exclude=retweets,replies&tweet.fields=created_at';"
             "data = requests.get(url, headers={'Authorization': 'Bearer '+token}).json();"
             "d = data.get('data');"
-	    "print(f\"{(d:=d[-1])['id']}|{d['created_at']}|{d['text']}\", end='') if d else print('', end='')";
+	    "print(f\"{(d:=d[-1])['id']}|{d['created_at']}|{d['text'].replace(chr(10),' ')}\", end='') if d else print('', end='')";
 	string memory code = string(abi.encodePacked(part1, userId, part2));
 	AgentRun storage run = agentRuns[runId];
 	run.codeInterpreted.push(code);
@@ -214,7 +214,7 @@ contract Agent {
 	    "url = f'https://api.twitter.com/2/users/{userId}/tweets?since_id={lastTweetId}&max_results=5&exclude=retweets,replies&tweet.fields=created_at';"
             "data = requests.get(url, headers={'Authorization': 'Bearer '+token}).json();"
             "d = data.get('data');"
-	    "print(f\"{(d:=d[-1])['id']}|{d['created_at']}|{d['text']}\", end='') if d else print('', end='')";
+	    "print(f\"{(d:=d[-1])['id']}|{d['created_at']}|{d['text'].replace(chr(10),' ')}\", end='') if d else print('', end='')";
 	string memory code = string(abi.encodePacked(part1, userId, part2, lastTweetId, part3));
 	AgentRun storage run = agentRuns[runId];
 	run.codeInterpreted.push(code);
