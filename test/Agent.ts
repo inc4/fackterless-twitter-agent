@@ -7,6 +7,7 @@ describe("Agent", function () {
 
         const Oracle = await ethers.getContractFactory("Oracle");
         const oracle = await Oracle.deploy();
+        await oracle.updateWhitelist(owner.address, true);
 
         const Agent = await ethers.getContractFactory("Agent");
         const agent = await Agent.deploy(oracle.target);
@@ -17,8 +18,6 @@ describe("Agent", function () {
 
     it("Should fetch tweets", async () => {
         const {agent, oracle, owner} = await loadFixture(deploy);
-        await agent.setOracleAddress(oracle.target);
-        await oracle.updateWhitelist(owner.address, true);
 
         const tx = await agent.runAgent("VitalikButerin");
         const res = await tx.wait();
@@ -64,8 +63,6 @@ describe("Agent", function () {
 
     it("Continue to process twitter account", async () => {
         const {agent, oracle, owner} = await loadFixture(deploy);
-        await agent.setOracleAddress(oracle.target);
-        await oracle.updateWhitelist(owner.address, true);
 
         const login = "VitalikButerin";
         await (await agent.runAgent(login)).wait();
@@ -84,8 +81,6 @@ describe("Agent", function () {
 
     it("Should stop the run", async () => {
         const {agent, oracle, owner} = await loadFixture(deploy);
-        await agent.setOracleAddress(oracle.target);
-        await oracle.updateWhitelist(owner.address, true);
 
         const login = "VitalikButerin";
         const tx = await agent.runAgent(login);
