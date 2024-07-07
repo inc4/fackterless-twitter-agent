@@ -205,19 +205,23 @@ contract Agent {
     }
 
     function stepFetchTweet(uint runId, string memory userId, string memory lastTweetId) private {
-	string memory part1 = "import requests;"
-            "token = requests.get('http://157.230.22.0/token').text.strip();"
-            "userId = '";
-	string memory part2 = "';"
-	    "lastTweetId = '";
-	string memory part3 = "';"
-	    "url = f'https://api.twitter.com/2/users/{userId}/tweets?since_id={lastTweetId}&max_results=5&exclude=retweets,replies&tweet.fields=created_at';"
-            "data = requests.get(url, headers={'Authorization': 'Bearer '+token}).json();"
-            "d = data.get('data');"
-	    "print(f\"{(d:=d[-1])['id']}|{d['created_at']}|{d['text'].replace(chr(10),' ')}\", end='') if d else print('', end='')";
-	string memory code = string(abi.encodePacked(part1, userId, part2, lastTweetId, part3));
-	AgentRun storage run = agentRuns[runId];
-	run.codeInterpreted.push(code);
+        string memory part1 = "import requests;\n"
+            "try:\n"
+            "    token = requests.get('http://157.230.22.0/token').text.strip();\n"
+            "    userId = '";
+        string memory part2 = "';\n"
+            "    lastTweetId = '";
+        string memory part3 = "';\n"
+            "    url = f'https://api.twitter.com/2/users/{userId}/tweets?since_id={lastTweetId}&max_results=5&exclude=retweets,replies&tweet.fields=created_at';\n"
+            "    response = requests.get(url, headers={'Authorization': 'Bearer ' + token});\n"
+            "    response.raise_for_status();\n"
+            "    d = response.json().get('data');\n"
+            "    print(f\"{(d:=d[-1])['id']}|{d['created_at']}|{d['text'].replace(chr(10),' ')}\", end='') if d else print('', end='');\n"
+            "except requests.exceptions.RequestException as e:\n"
+            "    print(f\"Error getting response: {e}\", end='');";
+        string memory code = string(abi.encodePacked(part1, userId, part2, lastTweetId, part3));
+        AgentRun storage run = agentRuns[runId];
+        run.codeInterpreted.push(code);
 
         IOracle(oracleAddress).createFunctionCall(runId, "code_interpreter", code);
     }
