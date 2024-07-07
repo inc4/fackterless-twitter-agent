@@ -87,8 +87,8 @@ contract Agent {
 	return usersById[usersByLogin[login]];
     }
 
-    function getTweet(string memory userId, uint index) public view returns (Tweet memory) {
-	return usersById[userId].tweets[index];
+    function getTweet(string memory login, uint index) public view returns (Tweet memory) {
+        return usersById[usersByLogin[login]].tweets[index];
     }
 
     function runAgent(string memory twitterLogin) public returns (uint) {
