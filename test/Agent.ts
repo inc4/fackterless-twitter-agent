@@ -79,6 +79,23 @@ describe("Agent", function () {
         expect(tweets[1].tweetId).to.equal("1729251838581727232");
     });
 
+    it("Should process error on continue fetching", async () => {
+        const {agent, oracle, owner} = await loadFixture(deploy);
+
+        const login = "VitalikButerin";
+        await (await agent.runAgent(login)).wait();
+        await (await oracle.addFunctionResponse(0, 0, "295218901", "")).wait();
+        await (await oracle.addFunctionResponse(1, 0, "1729251834404249696|2023-11-27T21:32:19.000Z|I criticize parts of *both* the e/acc and EA camps for being too willing to put their trust in a single centralized actor, whether a nonprofit or a national government, in their solutions. https://t.co/rwalZlGSGv", "")).wait();
+        await (await oracle.addFunctionResponse(2, 0, "", "err")).wait();
+        expect((await agent.agentRuns(0)).isFinished).to.equal(true);
+
+        await (await agent.runAgent(login)).wait();
+        await (await oracle.addFunctionResponse(3, 1, "Error", "")).wait();
+        const tweets = (await agent.getUserByLogin(login)).tweets;
+        expect(tweets.length).to.equal(1);
+        expect(tweets[0].tweetId).to.equal("1729251834404249696");
+    });
+
     it("Should stop the run", async () => {
         const {agent, oracle, owner} = await loadFixture(deploy);
 

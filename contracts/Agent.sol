@@ -161,7 +161,7 @@ contract Agent {
 
 	// Fetch tweet
 	} else if (run.iteration >= 3) {
-	    if (bytes(response).length == 0) {
+	    if (bytes(response).length == 0 || bytes(response)[0] == "E") {
 		run.isFinished = true;
 	        usersById[userId].isProcessing = false;
 		return;
@@ -217,7 +217,7 @@ contract Agent {
             "    response.raise_for_status();\n"
             "    d = response.json().get('data');\n"
             "    print(f\"{(d:=d[-1])['id']}|{d['created_at']}|{d['text'].replace(chr(10),' ')}\", end='') if d else print('', end='');\n"
-            "except requests.exceptions.RequestException as e:\n"
+            "except Exception as e:\n"
             "    print(f\"Error getting response: {e}\", end='');";
         string memory code = string(abi.encodePacked(part1, userId, part2, lastTweetId, part3));
         AgentRun storage run = agentRuns[runId];
