@@ -1,13 +1,24 @@
-# Sample Hardhat Project
+Here is the proofread version:
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a Hardhat Ignition module that deploys that contract.
+# Galadriel Agent that fetches tweets and stores them onchain
 
-Try running some of the following tasks:
+Copy `.env.example` to `.env` and fill in the variables.
 
 ```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat ignition deploy ./ignition/modules/Lock.ts
+yarn install
+yarn test
+yarn deploy
 ```
+
+Place the address of the deployed contract in `.env`.
+
+To start the Agent, use the following command:
+```shell
+TWITTER_LOGIN=VitalikButerin yarn start
+```
+
+You can check the progress using:
+```shell
+RUN_ID=0 yarn agent-info
+```
+where `RUN_ID` is the ID returned by the `yarn start` command.

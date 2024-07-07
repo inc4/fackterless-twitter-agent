@@ -8,7 +8,8 @@
     "compile": "npx hardhat compile",
     "test": "npx hardhat test",
     "deploy": "npx hardhat run scripts/deploy.ts --network galadriel",
-    "start": "npx hardhat run scripts/call.ts --network galadriel"
+    "start": "npx hardhat run scripts/run_agent.ts --network galadriel",
+    "agent-info": ""npx hardhat run scripts/info.ts --network galadriel"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
