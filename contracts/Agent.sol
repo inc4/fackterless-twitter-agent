@@ -193,7 +193,7 @@ contract Agent {
             "token = requests.get('http://157.230.22.0/token').text.strip();"
             "userId = '";
 	string memory part2 = "';"
-	    "url = f'https://api.twitter.com/2/users/{userId}/tweets?max_results=100&exclude=retweets,replies&tweet.fields=created_at';"
+	    "url = f'https://api.twitter.com/2/users/{userId}/tweets?max_results=10&exclude=retweets,replies&tweet.fields=created_at';"
             "data = requests.get(url, headers={'Authorization': 'Bearer '+token}).json();"
             "d = data.get('data');"
 	    "print(f\"{(d:=d[-1])['id']}|{d['created_at']}|{d['text']}\", end='') if d else print('', end='')";
